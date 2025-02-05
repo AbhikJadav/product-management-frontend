@@ -103,6 +103,7 @@ function App() {
   const handleSubmit = async (productData) => {
     try {
       if (selectedProduct) {
+        delete productData.SKU;
         await axios.put(`${API_URL}/products/${selectedProduct._id}`, productData);
       } else {
         await axios.post(`${API_URL}/products`, productData);

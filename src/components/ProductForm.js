@@ -79,6 +79,7 @@ function ProductForm({ product, onSubmit, onCancel }) {
             name="SKU"
             value={formData.SKU}
             onChange={handleChange}
+            disabled={product}
           />
         </Grid>
         <Grid item xs={12}>
@@ -99,7 +100,7 @@ function ProductForm({ product, onSubmit, onCancel }) {
               onChange={handleChange}
             >
               {categories.map((category) => (
-                <MenuItem key={category.category_id} value={category.category_id}>
+                <MenuItem key={category._id} value={category._id}>
                   {category.category_name}
                 </MenuItem>
               ))}
@@ -117,7 +118,7 @@ function ProductForm({ product, onSubmit, onCancel }) {
               renderValue={(selected) => (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {selected.map((value) => {
-                    const material = materials.find(m => m.material_id === value);
+                    const material = materials.find(m => m._id === value);
                     return (
                       <Chip 
                         key={value} 
@@ -129,7 +130,7 @@ function ProductForm({ product, onSubmit, onCancel }) {
               )}
             >
               {materials.map((material) => (
-                <MenuItem key={material.material_id} value={material.material_id}>
+                <MenuItem key={material._id} value={material._id}>
                   {material.material_name}
                 </MenuItem>
               ))}
