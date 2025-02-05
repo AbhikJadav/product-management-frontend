@@ -4,7 +4,8 @@ import {
   Col,
   Card,
   Typography,
-  Table
+  Table,
+  Spin
 } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import axios from 'axios';
@@ -12,25 +13,29 @@ import axios from 'axios';
 const { Title } = Typography;
 const API_URL = 'http://localhost:5000/api';
 
-function Statistics() {
+function Statistics({ refreshTrigger }) {
   const [stats, setStats] = useState({
     categoryHighestPrice: [],
     priceRangeCount: {},
     productsWithNoMedia: []
   });
+  const [loading, setLoading] = useState(false);
+
+  const fetchStats = async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get(`${API_URL}/products/statistics`);
+      setStats(response.data);
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/products/statistics`);
-        setStats(response.data);
-      } catch (error) {
-        console.error('Error fetching statistics:', error);
-      }
-    };
-
     fetchStats();
-  }, []);
+  }, [refreshTrigger]); // Refresh when trigger changes
 
   const priceRangeData = Object.entries(stats.priceRangeCount)
     .map(([range, countArray]) => ({
@@ -38,7 +43,6 @@ function Statistics() {
       count: countArray[0]?.count || 0
     }))
     .sort((a, b) => {
-      // Sort ranges in ascending order (0-500, 501-1000, 1000+)
       if (a.range.includes('+')) return 1;
       if (b.range.includes('+')) return -1;
       return parseInt(a.range.split('-')[0].substring(1)) - parseInt(b.range.split('-')[0].substring(1));
@@ -73,7 +77,6 @@ function Statistics() {
   ];
 
   const CustomTooltip = ({ active, payload, label }) => {
-    console.log("payload", payload);
     if (active && payload && payload.length) {
       return (
         <div style={{ 
@@ -91,58 +94,52 @@ function Statistics() {
   };
 
   return (
-    <Row gutter={[16, 16]}>
-      <Col xs={24} md={8}>
-        <Card>
-          <Title level={5}>Category-wise Highest Price</Title>
-          <Table
-            dataSource={stats.categoryHighestPrice}
-            columns={categoryColumns}
-            pagination={false}
-            size="small"
-          />
-        </Card>
-      </Col>
-      
-      <Col xs={24} md={8}>
-        <Card>
-          <Title level={5}>Price Range Distribution</Title>
-          <div style={{ width: '100%', height: 300 }}>
-            <ResponsiveContainer>
-              <BarChart 
-                data={priceRangeData}
-                margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="range" 
-                  interval={0}
-                />
-                <YAxis />
-                <Tooltip content={<CustomTooltip />} />
-                <Bar 
-                  dataKey="count" 
-                  fill="#1890ff"
-                  name="Products"
-                />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-      </Col>
+    <Spin spinning={loading}>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} md={8}>
+          <Card>
+            <Title level={5}>Category-wise Highest Price</Title>
+            <Table
+              dataSource={stats.categoryHighestPrice}
+              columns={categoryColumns}
+              pagination={false}
+              size="small"
+              rowKey={(record) => record.category[0]._id}
+            />
+          </Card>
+        </Col>
 
-      <Col xs={24} md={8}>
-        <Card>
-          <Title level={5}>Products Without Media</Title>
-          <Table
-            dataSource={stats.productsWithNoMedia}
-            columns={noMediaColumns}
-            pagination={false}
-            size="small"
-          />
-        </Card>
-      </Col>
-    </Row>
+        <Col xs={24} md={8}>
+          <Card>
+            <Title level={5}>Products by Price Range</Title>
+            <div style={{ width: '100%', height: 300 }}>
+              <ResponsiveContainer>
+                <BarChart data={priceRangeData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="range" />
+                  <YAxis allowDecimals={false} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Bar dataKey="count" fill="#1890ff" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </Col>
+
+        <Col xs={24} md={8}>
+          <Card>
+            <Title level={5}>Products Without Media</Title>
+            <Table
+              dataSource={stats.productsWithNoMedia}
+              columns={noMediaColumns}
+              pagination={false}
+              size="small"
+              rowKey="_id"
+            />
+          </Card>
+        </Col>
+      </Row>
+    </Spin>
   );
 }
 

@@ -34,6 +34,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [openModal, setOpenModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [filters, setFilters] = useState({
     SKU: "",
     product_name: "",
@@ -41,6 +42,10 @@ function App() {
     material_ids: "",
     status: "",
   });
+
+  const refreshData = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
 
   const fetchProducts = async (params = {}) => {
     setLoading(true);
@@ -59,13 +64,15 @@ function App() {
       });
     } catch (error) {
       console.error("Error fetching products:", error);
+      message.error("Failed to fetch products");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   useEffect(() => {
     fetchProducts();
-  }, [filters]);
+  }, [filters, refreshTrigger]);
 
   const handleTableChange = (newPagination) => {
     fetchProducts({
@@ -75,10 +82,23 @@ function App() {
   };
 
   const handleDelete = async (product) => {
+    const hideLoading = message.loading('Deleting product...', 0);
     try {
-      await axios.delete(`${API_URL}/products/${product._id}`);
-      fetchProducts();
+      const response = await axios.delete(`${API_URL}/products/${product._id}`);
+      hideLoading();
+      if (response.status === 200) {
+        message.success({
+          content: 'Product deleted successfully',
+          duration: 3
+        });
+        refreshData();
+      }
     } catch (error) {
+      hideLoading();
+      message.error({
+        content: error.response?.data?.message || 'Failed to delete product',
+        duration: 3
+      });
       console.error("Error deleting product:", error);
     }
   };
@@ -94,35 +114,40 @@ function App() {
   };
 
   const handleSubmit = async (values) => {
+    const hideLoading = message.loading(
+      selectedProduct ? 'Updating product...' : 'Creating product...',
+      0
+    );
     try {
-      console.log("Received values:", values);
-      // Ensure all fields are properly formatted
-      const formData = {
-        ...values,
-        material_ids: Array.isArray(values.material_ids) ? values.material_ids.map(id => String(id)) : [],
-        price: Number(values.price || 0)
-      };
-      console.log("Sending formData:", formData);
-
+      let response;
       if (selectedProduct) {
-        await axios.put(`${API_URL}/products/${selectedProduct._id}`, formData);
+        response = await axios.put(`${API_URL}/products/${selectedProduct._id}`, values);
       } else {
-        await axios.post(`${API_URL}/products`, formData);
+        response = await axios.post(`${API_URL}/products`, values);
       }
 
-      setOpenModal(false);
-      fetchProducts();
+      hideLoading();
+      if (response.status === 200 || response.status === 201) {
+        message.success({
+          content: selectedProduct 
+            ? 'Product updated successfully'
+            : 'Product created successfully',
+          duration: 3
+        });
+        setOpenModal(false);
+        refreshData();
+      }
     } catch (error) {
-      console.error('Error submitting product:', error.response?.data || error);
-      message.error(error.response?.data?.message || 'Error submitting product');
+      hideLoading();
+      message.error({
+        content: error.response?.data?.message || 
+          (selectedProduct ? 'Failed to update product' : 'Failed to create product'),
+        duration: 3
+      });
+      console.error("Error submitting product:", error);
     }
   };
 
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setSelectedProduct(null);
-  };
-  
   const columns = [
     {
       title: "SKU",
@@ -189,9 +214,14 @@ function App() {
       title: "Media",
       dataIndex: "media_url",
       key: "media_url",
-      render: (url) => url ? (
-        <a href={url} target="_blank" rel="noopener noreferrer">View Media</a>
-      ) : 'No Media'
+      render: (url) =>
+        url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            View Media
+          </a>
+        ) : (
+          "No Media"
+        ),
     },
     {
       title: "Actions",
@@ -219,7 +249,7 @@ function App() {
       <Content style={{ padding: "24px" }}>
         <Row gutter={[0, 24]}>
           <Col span={24}>
-            <Statistics />
+            <Statistics refreshTrigger={refreshTrigger} />
           </Col>
           <Col span={24}>
             <Card>
@@ -253,16 +283,23 @@ function App() {
         </Row>
 
         <Modal
-          title={selectedProduct ? "Edit Product" : "Create Product"}
+          title={selectedProduct ? "Edit Product" : "Add Product"}
           open={openModal}
-          onCancel={handleCloseModal}
+          onCancel={() => {
+            setOpenModal(false);
+            setSelectedProduct(null);
+          }}
           footer={null}
           width={800}
+          destroyOnClose={true}
         >
           <ProductForm
             product={selectedProduct}
             onSubmit={handleSubmit}
-            onCancel={handleCloseModal}
+            onCancel={() => {
+              setOpenModal(false);
+              setSelectedProduct(null);
+            }}
           />
         </Modal>
       </Content>
