@@ -1,248 +1,309 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  Container,
-  Grid,
-  Paper,
+  Layout,
   Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  TextField,
+  Input,
   Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  Typography
-} from '@material-ui/core';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@material-ui/icons';
-import axios from 'axios';
-import ProductForm from './components/ProductForm';
-import Statistics from './components/Statistics';
+  Modal,
+  Space,
+  Typography,
+  Card,
+  Row,
+  Col,
+  Form,
+  message,
+} from "antd";
+import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
+import axios from "axios";
+import ProductForm from "./components/ProductForm";
+import Statistics from "./components/Statistics";
 
-const API_URL = 'http://localhost:5000/api';
+const { Content } = Layout;
+const { Title } = Typography;
+const { Search } = Input;
+
+const API_URL = "http://localhost:5000/api";
 
 function App() {
   const [products, setProducts] = useState([]);
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [totalPages, setTotalPages] = useState(0);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+  const [loading, setLoading] = useState(false);
+  const [openModal, setOpenModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [filters, setFilters] = useState({
-    SKU: '',
-    product_name: '',
-    category_id: '',
-    material_ids: '',
-    status: ''
+    SKU: "",
+    product_name: "",
+    category_id: "",
+    material_ids: "",
+    status: "",
   });
 
-  const fetchProducts = async () => {
+  const refreshData = () => {
+    setRefreshTrigger((prev) => prev + 1);
+  };
+
+  const fetchProducts = async (params = {}) => {
+    setLoading(true);
     try {
       const queryParams = new URLSearchParams({
-        page: page + 1,
-        limit: rowsPerPage,
-        ...filters
+        page: params.current || pagination.current,
+        limit: params.pageSize || pagination.pageSize,
+        ...filters,
       });
 
       const response = await axios.get(`${API_URL}/products?${queryParams}`);
       setProducts(response.data.products);
-      setTotalPages(response.data.totalPages);
+      setPagination({
+        ...pagination,
+        total: response.data.totalProducts,
+      });
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error("Error fetching products:", error);
+      message.error("Failed to fetch products");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchProducts();
-  }, [page, rowsPerPage, filters]);
+  }, [filters, refreshTrigger]);
 
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
+  const handleTableChange = (newPagination) => {
+    fetchProducts({
+      current: newPagination.current,
+      pageSize: newPagination.pageSize,
+    });
   };
 
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleFilterChange = (event) => {
-    const { name, value } = event.target;
-    setFilters(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    setPage(0);
-  };
-
-  const handleAdd = () => {
-    setSelectedProduct(null);
-    setOpenDialog(true);
+  const handleDelete = async (product) => {
+    const hideLoading = message.loading('Deleting product...', 0);
+    try {
+      const response = await axios.delete(`${API_URL}/products/${product._id}`);
+      hideLoading();
+      if (response.status === 200) {
+        message.success({
+          content: 'Product deleted successfully',
+          duration: 3
+        });
+        refreshData();
+      }
+    } catch (error) {
+      hideLoading();
+      message.error({
+        content: error.response?.data?.message || 'Failed to delete product',
+        duration: 3
+      });
+      console.error("Error deleting product:", error);
+    }
   };
 
   const handleEdit = (product) => {
     setSelectedProduct(product);
-    setOpenDialog(true);
+    setOpenModal(true);
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this product?')) {
-      try {
-        await axios.delete(`${API_URL}/products/${id}`);
-        fetchProducts();
-      } catch (error) {
-        console.error('Error deleting product:', error);
-      }
-    }
+  const handleCreate = () => {
+    setSelectedProduct(null);
+    setOpenModal(true);
   };
 
-  const handleSubmit = async (productData) => {
+  const handleSubmit = async (values) => {
+    const hideLoading = message.loading(
+      selectedProduct ? 'Updating product...' : 'Creating product...',
+      0
+    );
     try {
+      let response;
       if (selectedProduct) {
-        delete productData.SKU;
-        await axios.put(`${API_URL}/products/${selectedProduct._id}`, productData);
+        response = await axios.put(`${API_URL}/products/${selectedProduct._id}`, values);
       } else {
-        await axios.post(`${API_URL}/products`, productData);
+        response = await axios.post(`${API_URL}/products`, values);
       }
-      setOpenDialog(false);
-      fetchProducts();
+
+      hideLoading();
+      if (response.status === 200 || response.status === 201) {
+        message.success({
+          content: selectedProduct 
+            ? 'Product updated successfully'
+            : 'Product created successfully',
+          duration: 3
+        });
+        setOpenModal(false);
+        refreshData();
+      }
     } catch (error) {
-      console.error('Error saving product:', error);
-      alert(error.response?.data?.error || 'Error saving product');
+      hideLoading();
+      message.error({
+        content: error.response?.data?.message || 
+          (selectedProduct ? 'Failed to update product' : 'Failed to create product'),
+        duration: 3
+      });
+      console.error("Error submitting product:", error);
     }
   };
+
+  const columns = [
+    {
+      title: "SKU",
+      dataIndex: "SKU",
+      key: "SKU",
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search SKU"
+            value={selectedKeys[0]}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
+            onPressEnter={() => {
+              confirm();
+              setFilters((prev) => ({ ...prev, SKU: selectedKeys[0] }));
+            }}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
+          />
+        </div>
+      ),
+    },
+    {
+      title: "Product Name",
+      dataIndex: "product_name",
+      key: "product_name",
+      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => (
+        <div style={{ padding: 8 }}>
+          <Input
+            placeholder="Search Product Name"
+            value={selectedKeys[0]}
+            onChange={(e) =>
+              setSelectedKeys(e.target.value ? [e.target.value] : [])
+            }
+            onPressEnter={() => {
+              confirm();
+              setFilters((prev) => ({
+                ...prev,
+                product_name: selectedKeys[0],
+              }));
+            }}
+            style={{ width: 188, marginBottom: 8, display: "block" }}
+          />
+        </div>
+      ),
+    },
+    {
+      title: "Category",
+      dataIndex: ["category_id", "category_name"],
+      key: "category",
+    },
+    {
+      title: "Price",
+      dataIndex: "price",
+      key: "price",
+      render: (price) => `₹${(price).toFixed(2)}`,
+    },
+    {
+      title: "Status",
+      dataIndex: "status",
+      key: "status",
+    },
+    {
+      title: "Media",
+      dataIndex: "media_url",
+      key: "media_url",
+      render: (url) =>
+        url ? (
+          <a href={url} target="_blank" rel="noopener noreferrer">
+            View Media
+          </a>
+        ) : (
+          "No Media"
+        ),
+    },
+    {
+      title: "Actions",
+      key: "actions",
+      render: (_, record) => (
+        <Space>
+          <Button
+            type="text"
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+          />
+          <Button
+            type="text"
+            danger
+            icon={<DeleteOutlined />}
+            onClick={() => handleDelete(record)}
+          />
+        </Space>
+      ),
+    },
+  ];
 
   return (
-    <Container maxWidth="lg" style={{ marginTop: '2rem' }}>
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <Statistics />
-        </Grid>
-        
-        <Grid item xs={12}>
-          <Paper style={{ padding: '1rem' }}>
-            <Grid container spacing={2} alignItems="center">
-              <Grid item>
+    <Layout>
+      <Content style={{ padding: "24px" }}>
+        <Row gutter={[0, 24]}>
+          <Col span={24}>
+            <Statistics refreshTrigger={refreshTrigger} />
+          </Col>
+          <Col span={24}>
+            <Card>
+              <Space
+                style={{
+                  marginBottom: 16,
+                  width: "100%",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Title level={4}>Products</Title>
                 <Button
-                  variant="contained"
-                  color="primary"
-                  startIcon={<AddIcon />}
-                  onClick={handleAdd}
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={handleCreate}
                 >
                   Add Product
                 </Button>
-              </Grid>
-              <Grid item xs>
-                <TextField
-                  name="SKU"
-                  label="SKU"
-                  value={filters.SKU}
-                  onChange={handleFilterChange}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs>
-                <TextField
-                  name="product_name"
-                  label="Product Name"
-                  value={filters.product_name}
-                  onChange={handleFilterChange}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs>
-                <TextField
-                  name="category_id"
-                  label="Category"
-                  value={filters.category_id}
-                  onChange={handleFilterChange}
-                  size="small"
-                />
-              </Grid>
-              <Grid item xs>
-                <TextField
-                  name="status"
-                  label="Status"
-                  value={filters.status}
-                  onChange={handleFilterChange}
-                  size="small"
-                  select
-                  SelectProps={{ native: true }}
-                >
-                  <option value="">All</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </TextField>
-              </Grid>
-            </Grid>
+              </Space>
 
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>SKU</TableCell>
-                    <TableCell>Product Name</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Materials</TableCell>
-                    <TableCell>Price</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {products.map((product) => (
-                    <TableRow key={product._id}>
-                      <TableCell>{product.SKU}</TableCell>
-                      <TableCell>{product.product_name}</TableCell>
-                      <TableCell>{product.category_id?.category_name}</TableCell>
-                      <TableCell>
-                        {product.material_ids?.map(m => m.material_name).join(', ')}
-                      </TableCell>
-                      <TableCell>₹{product.price}</TableCell>
-                      <TableCell>{product.status}</TableCell>
-                      <TableCell>
-                        <IconButton size="small" onClick={() => handleEdit(product)}>
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton size="small" onClick={() => handleDelete(product._id)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+              <Table
+                columns={columns}
+                dataSource={products}
+                rowKey="_id"
+                pagination={pagination}
+                onChange={handleTableChange}
+                loading={loading}
+              />
+            </Card>
+          </Col>
+        </Row>
 
-            <TablePagination
-              component="div"
-              count={totalPages * rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              rowsPerPage={rowsPerPage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-            />
-          </Paper>
-        </Grid>
-      </Grid>
-
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>
-          {selectedProduct ? 'Edit Product' : 'Add Product'}
-        </DialogTitle>
-        <DialogContent>
+        <Modal
+          title={selectedProduct ? "Edit Product" : "Add Product"}
+          open={openModal}
+          onCancel={() => {
+            setOpenModal(false);
+            setSelectedProduct(null);
+          }}
+          footer={null}
+          width={800}
+          destroyOnClose={true}
+        >
           <ProductForm
             product={selectedProduct}
             onSubmit={handleSubmit}
-            onCancel={() => setOpenDialog(false)}
+            onCancel={() => {
+              setOpenModal(false);
+              setSelectedProduct(null);
+            }}
           />
-        </DialogContent>
-      </Dialog>
-    </Container>
+        </Modal>
+      </Content>
+    </Layout>
   );
 }
 

@@ -1,13 +1,12 @@
-                                                                                                                                                                                                                                                                                                      {
+{
   "name": "product-management-frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@material-ui/core": "^4.12.4",
-    "@material-ui/icons": "^4.11.3",
-    "@material-ui/lab": "^4.0.0-alpha.61",
+    "@ant-design/icons": "^5.6.0",
+    "antd": "^5.23.4",
     "axios": "^1.4.0",
-    "react": "^17.0.2",                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     
+    "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-scripts": "5.0.1",
     "recharts": "^2.7.2"
