@@ -59,7 +59,7 @@ function Statistics() {
                 {stats.categoryHighestPrice.map((item) => (
                   <TableRow key={item._id}>
                     <TableCell>{item.category[0]?.category_name}</TableCell>
-                    <TableCell align="right">${item.highestPrice}</TableCell>
+                    <TableCell align="right">₹{item.highestPrice}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

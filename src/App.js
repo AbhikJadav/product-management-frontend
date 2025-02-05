@@ -202,7 +202,7 @@ function App() {
                       <TableCell>
                         {product.material_ids?.map(m => m.material_name).join(', ')}
                       </TableCell>
-                      <TableCell>${product.price}</TableCell>
+                      <TableCell>₹{product.price}</TableCell>
                       <TableCell>{product.status}</TableCell>
                       <TableCell>
                         <IconButton size="small" onClick={() => handleEdit(product)}>
