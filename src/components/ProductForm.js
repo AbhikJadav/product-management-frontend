@@ -6,9 +6,11 @@ import {
   Select,
   InputNumber,
   Space,
-  message
+  message,
+  Divider
 } from 'antd';
 import axios from 'axios';
+import { PlusOutlined } from '@ant-design/icons';
 
 const API_URL = 'http://localhost:5000/api';
 
@@ -17,27 +19,39 @@ function ProductForm({ product, onSubmit, onCancel }) {
   const [categories, setCategories] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [validating, setValidating] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newMaterialName, setNewMaterialName] = useState('');
 
-  useEffect(() => {
-    // Fetch categories
+  const fetchCategories = () => {
     axios.get(`${API_URL}/categories`)
       .then(response => setCategories(response.data))
       .catch(error => console.error('Error fetching categories:', error));
+  };
 
-    // Fetch materials
+  const fetchMaterials = () => {
     axios.get(`${API_URL}/materials`)
       .then(response => setMaterials(response.data))
       .catch(error => console.error('Error fetching materials:', error));
+  };
+console.log(product);
+  useEffect(() => {
+    fetchCategories();
+    fetchMaterials();
 
     // Set form values if product is provided (edit mode)
     if (product) {
+      const categoryId = product.category_id?.category_id || product.category_id;
+      const materialIds = product.material_ids?.map(m => m.material_id || m) || [];
+      
+
       form.setFieldsValue({
         SKU: product.SKU,
         product_name: product.product_name,
-        category_id: product.category_id._id, // Use the _id from the category object
-        material_ids: product.material_ids.map(m => m._id), // Map material objects to their _ids
+        category_id: categoryId,
+        material_ids: materialIds,
         price: product.price,
-        status: product.status
+        status: product.status,
+        media_url: product.media_url
       });
     }
   }, [product, form]);
@@ -68,17 +82,67 @@ function ProductForm({ product, onSubmit, onCancel }) {
 
   const handleSubmit = async (values) => {
     try {
-      await onSubmit(values);
-      // Only reset form after successful submission
+      const formData = {
+        ...values,
+        category_id: values.category_id.toString(),
+        material_ids: values.material_ids.map(id => id.toString())
+      };
+      console.log("Submitting form data:", formData);
+      await onSubmit(formData);
       form.resetFields();
     } catch (error) {
       message.error('Error submitting form');
     }
   };
-  const handleClose=() => {
+
+  const handleClose = () => {
     onCancel();
     form.resetFields();
-  }
+  };
+
+  const addNewCategory = async () => {
+    if (!newCategoryName.trim()) {
+      message.error('Please enter a category name');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/categories`, {
+        category_name: newCategoryName.trim()
+      });
+      
+      if (response.data) {
+        message.success('Category added successfully');
+        setNewCategoryName('');
+        fetchCategories();
+      }
+    } catch (error) {
+      message.error('Failed to add category');
+      console.error('Error adding category:', error);
+    }
+  };
+
+  const addNewMaterial = async () => {
+    if (!newMaterialName.trim()) {
+      message.error('Please enter a material name');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`${API_URL}/materials`, {
+        material_name: newMaterialName.trim()
+      });
+      
+      if (response.data) {
+        message.success('Material added successfully');
+        setNewMaterialName('');
+        fetchMaterials();
+      }
+    } catch (error) {
+      message.error('Failed to add material');
+      console.error('Error adding material:', error);
+    }
+  };
 
   return (
     <Form
@@ -91,7 +155,8 @@ function ProductForm({ product, onSubmit, onCancel }) {
         category_id: '',
         material_ids: [],
         price: '',
-        status: 'active'
+        status: 'active',
+        media_url: ''
       }}
     >
       <Form.Item
@@ -99,7 +164,7 @@ function ProductForm({ product, onSubmit, onCancel }) {
         label="SKU"
         rules={[
           { required: true, message: 'Please input SKU!' },
-          { validator: validateSKU }
+          // { validator: validateSKU }
         ]}
         validateTrigger={['onChange', 'onBlur']}
       >
@@ -119,9 +184,29 @@ function ProductForm({ product, onSubmit, onCancel }) {
         label="Category"
         rules={[{ required: true, message: 'Please select category!' }]}
       >
-        <Select>
+        <Select
+          showSearch
+          placeholder="Select a category"
+          optionFilterProp="children"
+          dropdownRender={(menu) => (
+            <>
+              {menu}
+              <Divider style={{ margin: '8px 0' }} />
+              <Space style={{ padding: '0 8px 4px' }}>
+                <Input
+                  placeholder="Enter new category"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                />
+                <Button type="text" icon={<PlusOutlined />} onClick={addNewCategory}>
+                  Add
+                </Button>
+              </Space>
+            </>
+          )}
+        >
           {categories.map((category) => (
-            <Select.Option key={category._id} value={category._id}>
+            <Select.Option key={category.category_id} value={category.category_id}>
               {category.category_name}
             </Select.Option>
           ))}
@@ -133,9 +218,31 @@ function ProductForm({ product, onSubmit, onCancel }) {
         label="Materials"
         rules={[{ required: true, message: 'Please select at least one material!' }]}
       >
-        <Select mode="multiple">
+        <Select
+          mode="multiple"
+          showSearch
+          placeholder="Select materials"
+          optionFilterProp="children"
+          allowClear
+          dropdownRender={(menu) => (
+            <>
+              {menu}
+              <Divider style={{ margin: '8px 0' }} />
+              <Space style={{ padding: '0 8px 4px' }}>
+                <Input
+                  placeholder="Enter new material"
+                  value={newMaterialName}
+                  onChange={(e) => setNewMaterialName(e.target.value)}
+                />
+                <Button type="text" icon={<PlusOutlined />} onClick={addNewMaterial}>
+                  Add
+                </Button>
+              </Space>
+            </>
+          )}
+        >
           {materials.map((material) => (
-            <Select.Option key={material._id} value={material._id}>
+            <Select.Option key={material.material_id} value={material.material_id}>
               {material.material_name}
             </Select.Option>
           ))}
@@ -149,8 +256,9 @@ function ProductForm({ product, onSubmit, onCancel }) {
       >
         <InputNumber
           min={0}
-          precision={2}
           style={{ width: '100%' }}
+          formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+          parser={value => value.replace(/₹\s?|(,*)/g, '')}
         />
       </Form.Item>
 
@@ -165,10 +273,17 @@ function ProductForm({ product, onSubmit, onCancel }) {
         </Select>
       </Form.Item>
 
+      <Form.Item
+        name="media_url"
+        label="Media URL"
+      >
+        <Input />
+      </Form.Item>
+
       <Form.Item>
         <Space>
-          <Button type="primary" htmlType="submit" loading={validating}>
-            {product ? 'Update' : 'Create'} Product
+          <Button type="primary" htmlType="submit">
+            {product ? 'Update' : 'Create'}
           </Button>
           <Button onClick={handleClose}>
             Cancel

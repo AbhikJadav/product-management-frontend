@@ -11,6 +11,7 @@ import {
   Row,
   Col,
   Form,
+  message,
 } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import axios from "axios";
@@ -94,16 +95,26 @@ function App() {
 
   const handleSubmit = async (values) => {
     try {
+      console.log("Received values:", values);
+      // Ensure all fields are properly formatted
+      const formData = {
+        ...values,
+        material_ids: Array.isArray(values.material_ids) ? values.material_ids.map(id => String(id)) : [],
+        price: Number(values.price || 0)
+      };
+      console.log("Sending formData:", formData);
+
       if (selectedProduct) {
-        await axios.put(`${API_URL}/products/${selectedProduct._id}`, values);
+        await axios.put(`${API_URL}/products/${selectedProduct._id}`, formData);
       } else {
-        await axios.post(`${API_URL}/products`, values);
+        await axios.post(`${API_URL}/products`, formData);
       }
+
       setOpenModal(false);
-      setSelectedProduct(null);
       fetchProducts();
     } catch (error) {
-      console.error("Error saving product:", error);
+      console.error('Error submitting product:', error.response?.data || error);
+      message.error(error.response?.data?.message || 'Error submitting product');
     }
   };
 
@@ -173,6 +184,14 @@ function App() {
       title: "Status",
       dataIndex: "status",
       key: "status",
+    },
+    {
+      title: "Media",
+      dataIndex: "media_url",
+      key: "media_url",
+      render: (url) => url ? (
+        <a href={url} target="_blank" rel="noopener noreferrer">View Media</a>
+      ) : 'No Media'
     },
     {
       title: "Actions",

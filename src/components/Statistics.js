@@ -65,9 +65,10 @@ function Statistics() {
       key: 'name'
     },
     {
-      title: 'SKU',
-      dataIndex: 'SKU',
-      key: 'sku'
+      title: 'Price',
+      dataIndex: 'price',
+      key: 'price',
+      render: (price) => `₹${price.toFixed(2)}`
     }
   ];
 
