@@ -110,7 +110,7 @@ function App() {
     setOpenModal(false);
     setSelectedProduct(null);
   };
-
+  
   
   const columns = [
     {
