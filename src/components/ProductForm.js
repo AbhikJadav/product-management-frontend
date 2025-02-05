@@ -69,11 +69,16 @@ function ProductForm({ product, onSubmit, onCancel }) {
   const handleSubmit = async (values) => {
     try {
       await onSubmit(values);
+      // Only reset form after successful submission
       form.resetFields();
     } catch (error) {
       message.error('Error submitting form');
     }
   };
+  const handleClose=() => {
+    onCancel();
+    form.resetFields();
+  }
 
   return (
     <Form
@@ -165,7 +170,7 @@ function ProductForm({ product, onSubmit, onCancel }) {
           <Button type="primary" htmlType="submit" loading={validating}>
             {product ? 'Update' : 'Create'} Product
           </Button>
-          <Button onClick={onCancel}>
+          <Button onClick={handleClose}>
             Cancel
           </Button>
         </Space>

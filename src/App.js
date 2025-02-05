@@ -100,17 +100,17 @@ function App() {
         await axios.post(`${API_URL}/products`, values);
       }
       setOpenModal(false);
+      setSelectedProduct(null);
       fetchProducts();
     } catch (error) {
       console.error("Error saving product:", error);
     }
   };
 
-  const handleCloseForm = () => {
+  const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedProduct(null);
   };
-  
   
   const columns = [
     {
@@ -236,14 +236,14 @@ function App() {
         <Modal
           title={selectedProduct ? "Edit Product" : "Create Product"}
           open={openModal}
-          onCancel={() => setOpenModal(false)}
+          onCancel={handleCloseModal}
           footer={null}
           width={800}
         >
           <ProductForm
             product={selectedProduct}
             onSubmit={handleSubmit}
-            onCancel={() => setOpenModal(false)}
+            onCancel={handleCloseModal}
           />
         </Modal>
       </Content>
