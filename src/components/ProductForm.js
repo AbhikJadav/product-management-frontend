@@ -1,180 +1,176 @@
 import React, { useState, useEffect } from 'react';
 import {
-  TextField,
+  Form,
+  Input,
   Button,
-  Grid,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Select,
-  Chip
-} from '@material-ui/core';
+  InputNumber,
+  Space,
+  message
+} from 'antd';
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api';
 
 function ProductForm({ product, onSubmit, onCancel }) {
-  const [formData, setFormData] = useState({
-    SKU: '',
-    product_name: '',
-    category_id: '',
-    material_ids: [],
-    price: '',
-    status: 'active'
-  });
-
+  const [form] = Form.useForm();
   const [categories, setCategories] = useState([]);
   const [materials, setMaterials] = useState([]);
+  const [validating, setValidating] = useState(false);
 
   useEffect(() => {
-    // Fetch categories and materials when component mounts
-    const fetchData = async () => {
-      try {
-        const [categoriesRes, materialsRes] = await Promise.all([
-          axios.get(`${API_URL}/categories`),
-          axios.get(`${API_URL}/materials`)
-        ]);
-        setCategories(categoriesRes.data);
-        setMaterials(materialsRes.data);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-    fetchData();
-  }, []);
+    // Fetch categories
+    axios.get(`${API_URL}/categories`)
+      .then(response => setCategories(response.data))
+      .catch(error => console.error('Error fetching categories:', error));
 
-  useEffect(() => {
+    // Fetch materials
+    axios.get(`${API_URL}/materials`)
+      .then(response => setMaterials(response.data))
+      .catch(error => console.error('Error fetching materials:', error));
+
+    // Set form values if product is provided (edit mode)
     if (product) {
-      setFormData({
-        SKU: product.SKU || '',
-        product_name: product.product_name || '',
-        category_id: product.category_id?._id || '',
-        material_ids: product.material_ids?.map(m => m._id) || [],
-        price: product.price || '',
-        status: product.status || 'active'
+      form.setFieldsValue({
+        SKU: product.SKU,
+        product_name: product.product_name,
+        category_id: product.category_id._id, // Use the _id from the category object
+        material_ids: product.material_ids.map(m => m._id), // Map material objects to their _ids
+        price: product.price,
+        status: product.status
       });
     }
-  }, [product]);
+  }, [product, form]);
 
-  const handleChange = (event) => {
-    const { name, value } = event.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const validateSKU = async (_, value) => {
+    if (!value || (product && product.SKU === value)) {
+      return Promise.resolve();
+    }
+
+    setValidating(true);
+    try {
+      const response = await axios.get(`${API_URL}/products`);
+      const products = response.data;
+      const exists = products.some(p => p.SKU === value);
+      
+      if (exists) {
+        setValidating(false);
+        return Promise.reject('SKU already exists!');
+      }
+      
+      setValidating(false);
+      return Promise.resolve();
+    } catch (error) {
+      setValidating(false);
+      return Promise.reject('Error validating SKU');
+    }
   };
 
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    onSubmit(formData);
+  const handleSubmit = async (values) => {
+    try {
+      await onSubmit(values);
+      form.resetFields();
+    } catch (error) {
+      message.error('Error submitting form');
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="SKU"
-            name="SKU"
-            value={formData.SKU}
-            onChange={handleChange}
-            disabled={product}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Product Name"
-            name="product_name"
-            value={formData.product_name}
-            onChange={handleChange}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <FormControl fullWidth>
-            <InputLabel>Category</InputLabel>
-            <Select
-              name="category_id"
-              value={formData.category_id}
-              onChange={handleChange}
-            >
-              {categories.map((category) => (
-                <MenuItem key={category._id} value={category._id}>
-                  {category.category_name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12}>
-          <FormControl fullWidth>
-            <InputLabel>Materials</InputLabel>
-            <Select
-              multiple
-              name="material_ids"
-              value={formData.material_ids}
-              onChange={handleChange}
-              renderValue={(selected) => (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                  {selected.map((value) => {
-                    const material = materials.find(m => m._id === value);
-                    return (
-                      <Chip 
-                        key={value} 
-                        label={material ? material.material_name : value} 
-                      />
-                    );
-                  })}
-                </div>
-              )}
-            >
-              {materials.map((material) => (
-                <MenuItem key={material._id} value={material._id}>
-                  {material.material_name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Price"
-            name="price"
-            type="number"
-            value={formData.price}
-            onChange={handleChange}
-          />
-        </Grid>
-        <Grid item xs={12}>
-          <FormControl fullWidth>
-            <InputLabel>Status</InputLabel>
-            <Select
-              name="status"
-              value={formData.status}
-              onChange={handleChange}
-            >
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
-            </Select>
-          </FormControl>
-        </Grid>
-        <Grid item xs={12}>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            style={{ marginRight: 8 }}
-          >
-            {product ? 'Update' : 'Create'}
+    <Form
+      form={form}
+      layout="vertical"
+      onFinish={handleSubmit}
+      initialValues={{
+        SKU: '',
+        product_name: '',
+        category_id: '',
+        material_ids: [],
+        price: '',
+        status: 'active'
+      }}
+    >
+      <Form.Item
+        name="SKU"
+        label="SKU"
+        rules={[
+          { required: true, message: 'Please input SKU!' },
+          { validator: validateSKU }
+        ]}
+        validateTrigger={['onChange', 'onBlur']}
+      >
+        <Input disabled={!!product} />
+      </Form.Item>
+
+      <Form.Item
+        name="product_name"
+        label="Product Name"
+        rules={[{ required: true, message: 'Please input product name!' }]}
+      >
+        <Input />
+      </Form.Item>
+
+      <Form.Item
+        name="category_id"
+        label="Category"
+        rules={[{ required: true, message: 'Please select category!' }]}
+      >
+        <Select>
+          {categories.map((category) => (
+            <Select.Option key={category._id} value={category._id}>
+              {category.category_name}
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="material_ids"
+        label="Materials"
+        rules={[{ required: true, message: 'Please select at least one material!' }]}
+      >
+        <Select mode="multiple">
+          {materials.map((material) => (
+            <Select.Option key={material._id} value={material._id}>
+              {material.material_name}
+            </Select.Option>
+          ))}
+        </Select>
+      </Form.Item>
+
+      <Form.Item
+        name="price"
+        label="Price"
+        rules={[{ required: true, message: 'Please input price!' }]}
+      >
+        <InputNumber
+          min={0}
+          precision={2}
+          style={{ width: '100%' }}
+        />
+      </Form.Item>
+
+      <Form.Item
+        name="status"
+        label="Status"
+        rules={[{ required: true, message: 'Please select status!' }]}
+      >
+        <Select>
+          <Select.Option value="active">Active</Select.Option>
+          <Select.Option value="inactive">Inactive</Select.Option>
+        </Select>
+      </Form.Item>
+
+      <Form.Item>
+        <Space>
+          <Button type="primary" htmlType="submit" loading={validating}>
+            {product ? 'Update' : 'Create'} Product
           </Button>
-          <Button variant="outlined" onClick={onCancel}>
+          <Button onClick={onCancel}>
             Cancel
           </Button>
-        </Grid>
-      </Grid>
-    </form>
+        </Space>
+      </Form.Item>
+    </Form>
   );
 }
 
