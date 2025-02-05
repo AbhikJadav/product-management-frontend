@@ -111,6 +111,7 @@ function App() {
     setSelectedProduct(null);
   };
 
+  
   const columns = [
     {
       title: "SKU",
