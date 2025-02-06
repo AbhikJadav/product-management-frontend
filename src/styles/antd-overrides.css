@@ -76,3 +76,136 @@
 .ant-form-item-control-input {
   min-height: auto !important;
 }
+
+/* Table Styles */
+.ant-table-wrapper {
+  overflow-x: auto;
+}
+
+.ant-table {
+  font-size: 14px;
+}
+
+.ant-table-thead > tr > th {
+  background: #fafafa;
+  font-weight: 600;
+  padding: 12px 16px;
+  white-space: nowrap;
+}
+
+.ant-table-tbody > tr > td {
+  padding: 12px 16px;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: #f5f5f5;
+}
+
+/* Fixed header */
+.ant-table-header {
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+/* Column styles */
+.ant-table-column-sorter {
+  margin-left: 4px;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 768px) {
+  .ant-table {
+    font-size: 13px;
+  }
+
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    padding: 8px 12px;
+  }
+
+  /* Stack action buttons on mobile */
+  .ant-table-tbody .ant-space {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .ant-table-tbody .ant-btn {
+    width: 100%;
+    margin: 0;
+  }
+}
+
+/* Pagination styles */
+.ant-pagination {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ant-pagination-item,
+.ant-pagination-prev,
+.ant-pagination-next {
+  margin: 0;
+}
+
+@media screen and (max-width: 576px) {
+  .ant-pagination {
+    justify-content: center;
+  }
+}
+
+/* Card styles */
+.ant-card {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  border-radius: 8px;
+}
+
+.ant-card-head {
+  min-height: auto;
+  padding: 16px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.ant-card-body {
+  padding: 16px;
+}
+
+/* Button styles */
+.ant-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 32px;
+  padding: 4px 16px;
+  font-size: 14px;
+  border-radius: 4px;
+}
+
+.ant-btn > .anticon {
+  font-size: 14px;
+}
+
+.ant-btn-primary {
+  background: #1890ff;
+  border: none;
+}
+
+.ant-btn-primary:hover {
+  background: #40a9ff;
+}
+
+.ant-btn-dangerous {
+  color: #ff4d4f;
+  border-color: #ff4d4f;
+}
+
+.ant-btn-dangerous:hover {
+  color: #ff7875;
+  border-color: #ff7875;
+}

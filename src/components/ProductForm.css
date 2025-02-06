@@ -1,0 +1,212 @@
+.product-form-container {
+  /* padding: 24px; */
+}
+
+/* Form layout */
+.product-form {
+  max-width: 100%;
+}
+
+.product-form .ant-form-item {
+  margin-bottom: 5px;
+}
+
+.product-form .ant-form-item-label {
+  padding-bottom: 2px;
+}
+
+.product-form .ant-form-item-label > label {
+  font-size: 13px;
+  color: #262626;
+  font-weight: 500;
+  height: 20px;
+}
+
+/* Form sections */
+.form-section {
+  margin-bottom: 12px;
+}
+
+.form-section .ant-typography {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #262626;
+}
+
+/* Dividers */
+:where(.css-dev-only-do-not-override-xex5fb).ant-divider-horizontal {
+  margin: 12px 0;
+}
+
+/* Input styling */
+.product-form .ant-input,
+.product-form .ant-input-number,
+.product-form .ant-select-selector {
+  border-radius: 6px;
+  border-color: #d9d9d9;
+  transition: all 0.2s;
+}
+
+.product-form .ant-input:hover,
+.product-form .ant-input-number:hover,
+.product-form .ant-select:hover .ant-select-selector {
+  border-color: #40a9ff;
+}
+
+.product-form .ant-input:focus,
+.product-form .ant-input-number:focus,
+.product-form .ant-select-focused .ant-select-selector {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+/* Select dropdowns */
+.product-form .ant-select-selector {
+  height: 32px !important;
+}
+
+.product-form .ant-select-selection-search-input {
+  height: 30px !important;
+}
+
+.product-form .ant-select-selection-item {
+  line-height: 30px !important;
+}
+
+/* Multiple select */
+.product-form .ant-select-multiple .ant-select-selector {
+  height: auto !important;
+  min-height: 32px !important;
+  padding: 2px 4px !important;
+}
+
+.product-form .ant-select-multiple .ant-select-selection-item {
+  height: 24px;
+  line-height: 22px !important;
+  margin: 2px 4px 2px 0;
+  padding: 0 8px;
+}
+
+/* Input number */
+.product-form .ant-input-number {
+  width: 100% !important;
+}
+
+.product-form .ant-input-number-input {
+  height: 30px !important;
+}
+
+/* Buttons */
+.product-form .ant-btn {
+  height: 32px;
+  padding: 4px 16px;
+  font-size: 14px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.product-form .ant-btn-primary {
+  background: #1890ff;
+  border: none;
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.043);
+}
+
+.product-form .ant-btn-primary:hover {
+  background: #40a9ff;
+  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.2);
+}
+
+.product-form .ant-btn-default:hover {
+  color: #40a9ff;
+  border-color: #40a9ff;
+}
+
+/* Error states */
+.product-form .ant-form-item-has-error .ant-input,
+.product-form .ant-form-item-has-error .ant-input-number,
+.product-form .ant-form-item-has-error .ant-select-selector {
+  border-color: #ff4d4f !important;
+}
+
+.product-form .ant-form-item-explain-error {
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+/* Add new category/material sections */
+.add-new-section {
+  padding: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.add-new-section .ant-input {
+  margin-bottom: 8px;
+}
+
+.add-new-section .ant-btn {
+  width: 100%;
+  text-align: left;
+  padding: 4px 8px;
+}
+
+.add-new-section .ant-btn:hover {
+  background: #f5f5f5;
+  color: #1890ff;
+}
+
+/* Modal specific styles */
+.product-modal {
+  max-width: calc(100vw - 32px);
+}
+
+.product-modal .ant-modal-content {
+  padding: 0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.product-modal .ant-modal-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  margin: 0;
+}
+
+.product-modal .ant-modal-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #262626;
+  line-height: 1.4;
+}
+
+.product-modal .ant-modal-body {
+  padding: 0;
+}
+
+.product-modal .ant-modal-close {
+  top: 12px;
+  right: 12px;
+}
+
+/* Responsive styles */
+@media screen and (max-width: 576px) {
+  .product-form-container {
+    padding: 16px;
+  }
+
+  .product-form .ant-form-item {
+    margin-bottom: 12px;
+  }
+
+  .product-form .ant-col {
+    flex: 0 0 100% !important;
+    max-width: 100% !important;
+  }
+
+  .product-modal .ant-modal-header {
+    padding: 10px 12px;
+  }
+
+  .product-modal .ant-modal-title {
+    font-size: 14px;
+  }
+}
