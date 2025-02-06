@@ -1,13 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { message } from 'antd';
+import { API_ENDPOINTS } from '../../config/api';
 
 const API_URL = 'http://localhost:5000/api';
 
 export const fetchMaterials = createAsyncThunk(
   'materials/fetchMaterials',
   async () => {
-    const response = await axios.get(`${API_URL}/materials`);
+    const response = await axios.get(API_ENDPOINTS.materials);
     return response.data;
   }
 );
@@ -17,7 +18,7 @@ export const createMaterial = createAsyncThunk(
   async (materialName) => {
     const hideLoading = message.loading('Adding new material...', 0);
     try {
-      const response = await axios.post(`${API_URL}/materials`, {
+      const response = await axios.post(API_ENDPOINTS.materials, {
         material_name: materialName.trim(),
       });
       hideLoading();

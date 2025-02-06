@@ -1,8 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { message } from 'antd';
-
-const API_URL = 'http://localhost:5000/api';
+import { API_ENDPOINTS } from '../../config/api';
 
 // Async thunks
 export const fetchProducts = createAsyncThunk(
@@ -13,7 +12,7 @@ export const fetchProducts = createAsyncThunk(
       limit: pageSize || 10,
       ...filters,
     });
-    const response = await axios.get(`${API_URL}/products?${queryParams}`);
+    const response = await axios.get(`${API_ENDPOINTS.products}?${queryParams}`);
     return response.data;
   }
 );
@@ -23,7 +22,7 @@ export const createProduct = createAsyncThunk(
   async (productData) => {
     const hideLoading = message.loading('Creating product...', 0);
     try {
-      const response = await axios.post(`${API_URL}/products`, productData);
+      const response = await axios.post(API_ENDPOINTS.products, productData);
       hideLoading();
       message.success('Product created successfully');
       return response.data;
@@ -40,7 +39,7 @@ export const updateProduct = createAsyncThunk(
   async ({ id, productData }) => {
     const hideLoading = message.loading('Updating product...', 0);
     try {
-      const response = await axios.put(`${API_URL}/products/${id}`, productData);
+      const response = await axios.put(`${API_ENDPOINTS.products}/${id}`, productData);
       hideLoading();
       message.success('Product updated successfully');
       return response.data;
@@ -57,7 +56,7 @@ export const deleteProduct = createAsyncThunk(
   async (id) => {
     const hideLoading = message.loading('Deleting product...', 0);
     try {
-      await axios.delete(`${API_URL}/products/${id}`);
+      await axios.delete(`${API_ENDPOINTS.products}/${id}`);
       hideLoading();
       message.success('Product deleted successfully');
       return id;

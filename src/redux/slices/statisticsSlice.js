@@ -1,7 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-
-const BASE_URL = 'http://localhost:5000';
+import { API_ENDPOINTS } from '../../config/api';
 
 const initialState = {
   data: {
@@ -19,7 +18,7 @@ const initialState = {
 export const fetchStatistics = createAsyncThunk(
   'statistics/fetchStatistics',
   async () => {
-    const response = await axios.get(`${BASE_URL}/api/products/statistics`);
+    const response = await axios.get(API_ENDPOINTS.statistics);
     return response.data;
   }
 );
