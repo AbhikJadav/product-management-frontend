@@ -15,6 +15,7 @@ import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
 import ProductForm from "./components/ProductForm";
 import Statistics from "./components/Statistics";
 import { fetchProducts, deleteProduct } from './redux/slices/productSlice';
+import { fetchStatistics } from './redux/slices/statisticsSlice';
 import './styles/antd-overrides.css';
 
 const { Content } = Layout;
@@ -30,8 +31,15 @@ function App() {
     pageSize: 10,
   });
 
+  const refreshData = async () => {
+    await Promise.all([
+      dispatch(fetchProducts({ ...pagination })),
+      dispatch(fetchStatistics())
+    ]);
+  };
+
   useEffect(() => {
-    dispatch(fetchProducts({ ...pagination }));
+    refreshData();
   }, [dispatch, pagination]);
 
   const handleTableChange = (newPagination) => {
@@ -41,7 +49,7 @@ function App() {
   const handleDelete = async (product) => {
     try {
       await dispatch(deleteProduct(product._id)).unwrap();
-      dispatch(fetchProducts({ ...pagination }));
+      await refreshData();
     } catch (error) {
       console.error("Error deleting product:", error);
     }
@@ -184,9 +192,9 @@ function App() {
           >
             <ProductForm
               product={selectedProduct}
-              onSubmit={async (values) => {
+              onSubmit={async () => {
                 setOpenModal(false);
-                dispatch(fetchProducts({ ...pagination }));
+                await refreshData();
               }}
               onCancel={() => {
                 setOpenModal(false);
