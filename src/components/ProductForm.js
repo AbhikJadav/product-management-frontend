@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from "react-redux";
 import {
   Form,
   Input,
@@ -11,9 +11,9 @@ import {
   Space,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
-import { createProduct, updateProduct } from '../redux/slices/productSlice';
-import { fetchCategories, createCategory } from '../redux/slices/categorySlice';
-import { fetchMaterials, createMaterial } from '../redux/slices/materialSlice';
+import { createProduct, updateProduct } from "../redux/slices/productSlice";
+import { fetchCategories, createCategory } from "../redux/slices/categorySlice";
+import { fetchMaterials, createMaterial } from "../redux/slices/materialSlice";
 
 const { Option } = Select;
 
@@ -23,10 +23,10 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newMaterialName, setNewMaterialName] = useState("");
 
-  const categories = useSelector(state => state.categories.items);
-  const materials = useSelector(state => state.materials.items);
-  const categoriesLoading = useSelector(state => state.categories.loading);
-  const materialsLoading = useSelector(state => state.materials.loading);
+  const categories = useSelector((state) => state.categories.items);
+  const materials = useSelector((state) => state.materials.items);
+  const categoriesLoading = useSelector((state) => state.categories.loading);
+  const materialsLoading = useSelector((state) => state.materials.loading);
 
   useEffect(() => {
     dispatch(fetchCategories());
@@ -35,10 +35,11 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
 
   useEffect(() => {
     if (product) {
+      console.log("Product data:", product);
       form.setFieldsValue({
         ...product,
-        category_id: product.category_id?._id,
-        material_ids: product.material_ids?.map((m) => m._id),
+        category_id: product.category_id?.category_id,
+        material_ids: product.material_ids?.map((m) => m._id || m),
         media_url: product.media_url,
       });
     }
@@ -46,11 +47,13 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
 
   const handleFinish = async (values) => {
     try {
+      console.log('Form values before submission:', values);
       const formData = {
         ...values,
         material_ids: values.material_ids?.map(String) || [],
         price: Number(values.price || 0),
       };
+      console.log('Form data after processing:', formData);
 
       if (product) {
         await dispatch(updateProduct({ id: product._id, productData: formData })).unwrap();
@@ -69,7 +72,7 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
       await dispatch(createCategory(newCategoryName)).unwrap();
       setNewCategoryName("");
     } catch (error) {
-      console.error('Error adding category:', error);
+      console.error("Error adding category:", error);
     }
   };
 
@@ -79,7 +82,7 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
       await dispatch(createMaterial(newMaterialName)).unwrap();
       setNewMaterialName("");
     } catch (error) {
-      console.error('Error adding material:', error);
+      console.error("Error adding material:", error);
     }
   };
 
@@ -109,7 +112,9 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
               <Form.Item
                 name="product_name"
                 label="Product Name"
-                rules={[{ required: true, message: "Please enter product name" }]}
+                rules={[
+                  { required: true, message: "Please enter product name" },
+                ]}
               >
                 <Input placeholder="Enter product name" />
               </Form.Item>
@@ -129,7 +134,12 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
                   dropdownRender={(menu) => (
                     <>
                       {menu}
-                      <div style={{ padding: "8px", borderTop: '1px solid #f0f0f0' }}>
+                      <div
+                        style={{
+                          padding: "8px",
+                          borderTop: "1px solid #f0f0f0",
+                        }}
+                      >
                         <Input
                           value={newCategoryName}
                           onChange={(e) => setNewCategoryName(e.target.value)}
@@ -149,7 +159,10 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
                   )}
                 >
                   {categories.map((category) => (
-                    <Option key={category.category_id} value={category.category_id}>
+                    <Option
+                      key={category.category_id}
+                      value={category.category_id}
+                    >
                       {category.category_name}
                     </Option>
                   ))}
@@ -169,7 +182,12 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
                   dropdownRender={(menu) => (
                     <>
                       {menu}
-                      <div style={{ padding: "8px", borderTop: '1px solid #f0f0f0' }}>
+                      <div
+                        style={{
+                          padding: "8px",
+                          borderTop: "1px solid #f0f0f0",
+                        }}
+                      >
                         <Input
                           value={newMaterialName}
                           onChange={(e) => setNewMaterialName(e.target.value)}
@@ -211,8 +229,10 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
                   min={0}
                   step={0.01}
                   precision={2}
-                  formatter={(value) => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                  parser={(value) => value.replace(/₹\s?|(,*)/g, '')}
+                  formatter={(value) =>
+                    `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+                  }
+                  parser={(value) => value.replace(/₹\s?|(,*)/g, "")}
                 />
               </Form.Item>
             </Col>
@@ -236,10 +256,10 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
                 name="media_url"
                 label="Media URL"
                 rules={[
-                  { 
-                    type: 'url',
-                    message: 'Please enter a valid URL'
-                  }
+                  {
+                    type: "url",
+                    message: "Please enter a valid URL",
+                  },
                 ]}
               >
                 <Input placeholder="Enter media URL" />

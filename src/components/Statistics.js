@@ -105,7 +105,7 @@ console.log(stats,"stats");
     sku: product.SKU,
     name: product.product_name,
     category: product.category_id?.category_name || 'N/A'
-  })) || [];
+  }));
 
   // Prepare category price data
   const categoryPriceData = stats.categoryHighestPrice?.map(cat => ({
@@ -143,7 +143,6 @@ console.log(stats,"stats");
                 title="Total Value"
                 value={stats.totalValue || 0}
                 precision={2}
-                prefix={<DollarOutlined />}
                 formatter={value => `₹${value}`}
               />
             </Card>
