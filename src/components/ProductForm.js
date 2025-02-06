@@ -9,6 +9,7 @@ import {
   Col,
   InputNumber,
   Space,
+  message,
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { createProduct, updateProduct } from "../redux/slices/productSlice";
@@ -17,11 +18,13 @@ import { fetchMaterials, createMaterial } from "../redux/slices/materialSlice";
 
 const { Option } = Select;
 
-const ProductForm = ({ product, onSubmit, onCancel }) => {
+const ProductForm = ({ product, productsData, onSubmit, onCancel }) => {
+
   const dispatch = useDispatch();
   const [form] = Form.useForm();
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newMaterialName, setNewMaterialName] = useState("");
+  const [skuError, setSkuError] = useState("");
 
   const categories = useSelector((state) => state.categories.items);
   const materials = useSelector((state) => state.materials.items);
@@ -45,25 +48,50 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
     }
   }, [product, form]);
 
-  const handleFinish = async (values) => {
-    try {
-      console.log('Form values before submission:', values);
-      const formData = {
-        ...values,
-        material_ids: values.material_ids?.map(String) || [],
-        price: Number(values.price || 0),
-      };
-      console.log('Form data after processing:', formData);
-
-      if (product) {
-        await dispatch(updateProduct({ id: product._id, productData: formData })).unwrap();
-      } else {
-        await dispatch(createProduct(formData)).unwrap();
-      }
-      onSubmit(values);
-    } catch (error) {
-      console.error('Error submitting form:', error);
+  const handleSkuChange = (e) => {
+    const sku = e.target.value;
+    if (!sku) {
+      setSkuError("");
+      return;
     }
+
+    // For update, ignore the current product's SKU
+    const existingProduct = productsData?.find(
+      p => p.SKU === sku && p._id !== (product?._id)
+    );
+    if (existingProduct) {
+      setSkuError("This SKU already exists");
+    } else {
+      setSkuError("");
+    }
+  };
+console.log("skuError",skuError)
+  const handleFinish = async (values) => {
+    if (skuError) {
+      message.error("Please fix the SKU error before submitting");
+      return;
+    }
+    else{
+      try {
+        const formData = {
+          ...values,
+          material_ids: values.material_ids?.map(String) || [],
+          price: Number(values.price || 0),
+        };
+  
+        if (product) {
+          await dispatch(updateProduct({ id: product._id, productData: formData })).unwrap();
+        } else {
+          await dispatch(createProduct(formData)).unwrap();
+        }
+        onSubmit(values);
+      } catch (error) {
+        console.error('Error submitting form:', error);
+        message.error("Failed to save product. Please try again.");
+      }
+   
+    }
+
   };
 
   const addNewCategory = async () => {
@@ -103,9 +131,14 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
               <Form.Item
                 name="SKU"
                 label="SKU"
+                validateStatus={skuError ? 'error' : ''}
+                help={skuError}
                 rules={[{ required: true, message: "Please enter SKU" }]}
               >
-                <Input placeholder="Enter SKU" />
+                <Input 
+                  placeholder="Enter SKU" 
+                  onChange={handleSkuChange}
+                />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -270,7 +303,7 @@ const ProductForm = ({ product, onSubmit, onCancel }) => {
 
         <Form.Item style={{ marginBottom: 0, marginTop: 16 }}>
           <Space>
-            <Button type="primary" htmlType="submit">
+            <Button type="primary" htmlType="submit" disabled={!!skuError}>
               {product ? "Update" : "Create"}
             </Button>
             <Button onClick={onCancel}>Cancel</Button>

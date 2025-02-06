@@ -192,6 +192,7 @@ function App() {
           >
             <ProductForm
               product={selectedProduct}
+              productsData={products}
               onSubmit={async () => {
                 setOpenModal(false);
                 await refreshData();
