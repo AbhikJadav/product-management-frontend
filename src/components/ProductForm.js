@@ -57,6 +57,12 @@ const ProductForm = ({ product, productsData, onSubmit, onCancel }) => {
       return;
     }
 
+    // Check if SKU contains only numbers
+    if (/^\d+$/.test(sku)) {
+      setSkuError("SKU cannot contain only numbers");
+      return;
+    }
+
     const existingProduct = productsData?.find(
       p => p.SKU === sku && p._id !== (product?._id)
     );
@@ -131,11 +137,21 @@ const ProductForm = ({ product, productsData, onSubmit, onCancel }) => {
                 label="SKU"
                 validateStatus={skuError ? 'error' : ''}
                 help={skuError}
-                rules={[{ required: true, message: "Please enter SKU" }]}
+                rules={[
+                  { required: true, message: "Please enter SKU" },
+                  {
+                    validator: async (_, value) => {
+                      if (value && /^\d+$/.test(value)) {
+                        throw new Error('SKU cannot contain only numbers');
+                      }
+                    },
+                  }
+                ]}
               >
                 <Input 
                   placeholder="Enter SKU" 
                   onChange={handleSkuChange}
+                  disabled={!!product}
                 />
               </Form.Item>
             </Col>

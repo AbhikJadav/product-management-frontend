@@ -71,23 +71,32 @@ function App() {
       dataIndex: "SKU",
       key: "SKU",
       sorter: true,
+      fixed: 'left',
+      width: 120,
     },
     {
       title: "Product Name",
       dataIndex: "product_name",
       key: "product_name",
       sorter: true,
+      fixed: 'left',
+      width: 200,
+      ellipsis: true,
     },
     {
       title: "Category",
       dataIndex: ["category_id", "category_name"],
       key: "category",
       sorter: true,
+      width: 150,
+      ellipsis: true,
     },
     {
       title: "Materials",
       dataIndex: "material_ids",
       key: "materials",
+      width: 200,
+      ellipsis: true,
       render: (materials) =>
         materials?.map((m) => m.material_name).join(", ") || "N/A",
     },
@@ -96,6 +105,7 @@ function App() {
       dataIndex: "price",
       key: "price",
       sorter: true,
+      width: 120,
       render: (price) => `₹${price.toFixed(2)}`,
     },
     {
@@ -103,11 +113,14 @@ function App() {
       dataIndex: "status",
       key: "status",
       sorter: true,
+      width: 100,
     },
     {
       title: "Media URL",
       dataIndex: "media_url",
       key: "media_url",
+      width: 120,
+      ellipsis: true,
       render: (url) => url ? (
         <a href={url} target="_blank" rel="noopener noreferrer">
           View Media
@@ -119,6 +132,8 @@ function App() {
     {
       title: "Actions",
       key: "actions",
+      fixed: 'right',
+      width: 200,
       render: (_, record) => (
         <Space>
           <Button
@@ -170,9 +185,15 @@ function App() {
             pagination={{
               ...pagination,
               total: totalProducts,
+              showSizeChanger: true,
+              showQuickJumper: true,
+              showTotal: (total) => `Total ${total} items`,
+              pageSizeOptions: ['10', '20', '50', '100'],
             }}
             onChange={handleTableChange}
             loading={loading}
+            scroll={{ x: 1200 }}
+            sticky
           />
 
           <Modal
