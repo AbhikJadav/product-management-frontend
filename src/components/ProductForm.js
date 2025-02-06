@@ -10,16 +10,19 @@ import {
   InputNumber,
   Space,
   message,
+  Divider,
+  Typography
 } from "antd";
 import { PlusOutlined } from "@ant-design/icons";
 import { createProduct, updateProduct } from "../redux/slices/productSlice";
 import { fetchCategories, createCategory } from "../redux/slices/categorySlice";
 import { fetchMaterials, createMaterial } from "../redux/slices/materialSlice";
+import "./ProductForm.css";
 
 const { Option } = Select;
+const { Title } = Typography;
 
 const ProductForm = ({ product, productsData, onSubmit, onCancel }) => {
-
   const dispatch = useDispatch();
   const [form] = Form.useForm();
   const [newCategoryName, setNewCategoryName] = useState("");
@@ -38,7 +41,6 @@ const ProductForm = ({ product, productsData, onSubmit, onCancel }) => {
 
   useEffect(() => {
     if (product) {
-      console.log("Product data:", product);
       form.setFieldsValue({
         ...product,
         category_id: product.category_id?.category_id,
@@ -55,7 +57,6 @@ const ProductForm = ({ product, productsData, onSubmit, onCancel }) => {
       return;
     }
 
-    // For update, ignore the current product's SKU
     const existingProduct = productsData?.find(
       p => p.SKU === sku && p._id !== (product?._id)
     );
@@ -65,33 +66,29 @@ const ProductForm = ({ product, productsData, onSubmit, onCancel }) => {
       setSkuError("");
     }
   };
-console.log("skuError",skuError)
+
   const handleFinish = async (values) => {
     if (skuError) {
       message.error("Please fix the SKU error before submitting");
       return;
     }
-    else{
-      try {
-        const formData = {
-          ...values,
-          material_ids: values.material_ids?.map(String) || [],
-          price: Number(values.price || 0),
-        };
-  
-        if (product) {
-          await dispatch(updateProduct({ id: product._id, productData: formData })).unwrap();
-        } else {
-          await dispatch(createProduct(formData)).unwrap();
-        }
-        onSubmit(values);
-      } catch (error) {
-        console.error('Error submitting form:', error);
-        message.error("Failed to save product. Please try again.");
-      }
-   
-    }
+    try {
+      const formData = {
+        ...values,
+        material_ids: values.material_ids?.map(String) || [],
+        price: Number(values.price || 0),
+      };
 
+      if (product) {
+        await dispatch(updateProduct({ id: product._id, productData: formData })).unwrap();
+      } else {
+        await dispatch(createProduct(formData)).unwrap();
+      }
+      onSubmit(values);
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      message.error("Failed to save product. Please try again.");
+    }
   };
 
   const addNewCategory = async () => {
@@ -125,9 +122,10 @@ console.log("skuError",skuError)
         }}
         className="product-form"
       >
-        <div className="product-form-scroll">
+        <div className="form-section">
+          <Title level={5}>Basic Information</Title>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="SKU"
                 label="SKU"
@@ -141,21 +139,24 @@ console.log("skuError",skuError)
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="product_name"
                 label="Product Name"
-                rules={[
-                  { required: true, message: "Please enter product name" },
-                ]}
+                rules={[{ required: true, message: "Please enter product name" }]}
               >
                 <Input placeholder="Enter product name" />
               </Form.Item>
             </Col>
           </Row>
+        </div>
 
+        <Divider />
+
+        <div className="form-section">
+          <Title level={5}>Classification</Title>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="category_id"
                 label="Category"
@@ -167,23 +168,16 @@ console.log("skuError",skuError)
                   dropdownRender={(menu) => (
                     <>
                       {menu}
-                      <div
-                        style={{
-                          padding: "8px",
-                          borderTop: "1px solid #f0f0f0",
-                        }}
-                      >
+                      <div className="add-new-section">
                         <Input
                           value={newCategoryName}
                           onChange={(e) => setNewCategoryName(e.target.value)}
                           placeholder="New category name"
-                          style={{ marginBottom: 8 }}
                         />
                         <Button
                           type="text"
                           icon={<PlusOutlined />}
                           onClick={addNewCategory}
-                          block
                         >
                           Add Category
                         </Button>
@@ -192,17 +186,14 @@ console.log("skuError",skuError)
                   )}
                 >
                   {categories.map((category) => (
-                    <Option
-                      key={category.category_id}
-                      value={category.category_id}
-                    >
+                    <Option key={category.category_id} value={category.category_id}>
                       {category.category_name}
                     </Option>
                   ))}
                 </Select>
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="material_ids"
                 label="Materials"
@@ -215,23 +206,16 @@ console.log("skuError",skuError)
                   dropdownRender={(menu) => (
                     <>
                       {menu}
-                      <div
-                        style={{
-                          padding: "8px",
-                          borderTop: "1px solid #f0f0f0",
-                        }}
-                      >
+                      <div className="add-new-section">
                         <Input
                           value={newMaterialName}
                           onChange={(e) => setNewMaterialName(e.target.value)}
                           placeholder="New material name"
-                          style={{ marginBottom: 8 }}
                         />
                         <Button
                           type="text"
                           icon={<PlusOutlined />}
                           onClick={addNewMaterial}
-                          block
                         >
                           Add Material
                         </Button>
@@ -248,9 +232,14 @@ console.log("skuError",skuError)
               </Form.Item>
             </Col>
           </Row>
+        </div>
 
+        <Divider />
+
+        <div className="form-section">
+          <Title level={5}>Product Details</Title>
           <Row gutter={16}>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="price"
                 label="Price"
@@ -269,7 +258,7 @@ console.log("skuError",skuError)
                 />
               </Form.Item>
             </Col>
-            <Col span={12}>
+            <Col xs={24} sm={12}>
               <Form.Item
                 name="status"
                 label="Status"
@@ -301,14 +290,14 @@ console.log("skuError",skuError)
           </Row>
         </div>
 
-        <Form.Item style={{ marginBottom: 0, marginTop: 16 }}>
+        <div className="form-actions">
           <Space>
             <Button type="primary" htmlType="submit" disabled={!!skuError}>
-              {product ? "Update" : "Create"}
+              {product ? "Update Product" : "Create Product"}
             </Button>
             <Button onClick={onCancel}>Cancel</Button>
           </Space>
-        </Form.Item>
+        </div>
       </Form>
     </div>
   );

@@ -189,6 +189,7 @@ function App() {
             maskClosable={false}
             centered
             className="product-modal"
+            bodyStyle={{ padding: 0 }}
           >
             <ProductForm
               product={selectedProduct}
