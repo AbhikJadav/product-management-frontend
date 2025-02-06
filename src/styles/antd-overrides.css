@@ -1,0 +1,78 @@
+.ant-select-dropdown {
+  position: fixed !important;
+}
+
+.ant-modal-wrap {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: auto !important;
+}
+
+.ant-modal {
+  top: 0 !important;
+  padding-bottom: 0 !important;
+  margin: 0 !important;
+  max-height: calc(100vh - 32px) !important;
+}
+
+.ant-modal-content {
+  max-height: calc(100vh - 32px) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+}
+
+.ant-modal-header {
+  padding: 16px 24px !important;
+  border-bottom: 1px solid #f0f0f0 !important;
+}
+
+.ant-modal-body {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding: 24px !important;
+  max-height: calc(100vh - 180px) !important;
+}
+
+.product-form-container {
+  position: relative !important;
+  height: 100% !important;
+}
+
+.product-form {
+  height: 100% !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.product-form-scroll {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  padding-right: 4px !important;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.product-form-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.product-form-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.product-form-scroll::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 3px;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.product-form-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #888 #f1f1f1;
+}
+
+.ant-form-item-control-input {
+  min-height: auto !important;
+}

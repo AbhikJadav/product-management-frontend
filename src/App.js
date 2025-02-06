@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from 'react-redux';
 import {
   Layout,
   Table,
-  Input,
   Button,
   Modal,
   Space,
@@ -10,95 +10,39 @@ import {
   Card,
   Row,
   Col,
-  Form,
-  message,
 } from "antd";
 import { PlusOutlined, EditOutlined, DeleteOutlined } from "@ant-design/icons";
-import axios from "axios";
 import ProductForm from "./components/ProductForm";
 import Statistics from "./components/Statistics";
+import { fetchProducts, deleteProduct } from './redux/slices/productSlice';
+import './styles/antd-overrides.css';
 
 const { Content } = Layout;
 const { Title } = Typography;
-const { Search } = Input;
-
-const API_URL = "http://localhost:5000/api";
 
 function App() {
-  const [products, setProducts] = useState([]);
+  const dispatch = useDispatch();
+  const { items: products, totalProducts, loading } = useSelector(state => state.products);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
-    total: 0,
   });
-  const [loading, setLoading] = useState(false);
-  const [openModal, setOpenModal] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-  const [refreshTrigger, setRefreshTrigger] = useState(0);
-  const [filters, setFilters] = useState({
-    SKU: "",
-    product_name: "",
-    category_id: "",
-    material_ids: "",
-    status: "",
-  });
-
-  const refreshData = () => {
-    setRefreshTrigger((prev) => prev + 1);
-  };
-
-  const fetchProducts = async (params = {}) => {
-    setLoading(true);
-    try {
-      const queryParams = new URLSearchParams({
-        page: params.current || pagination.current,
-        limit: params.pageSize || pagination.pageSize,
-        ...filters,
-      });
-
-      const response = await axios.get(`${API_URL}/products?${queryParams}`);
-      setProducts(response.data.products);
-      setPagination({
-        ...pagination,
-        total: response.data.totalProducts,
-      });
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      message.error("Failed to fetch products");
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchProducts();
-  }, [filters, refreshTrigger]);
+    dispatch(fetchProducts({ ...pagination }));
+  }, [dispatch, pagination]);
 
   const handleTableChange = (newPagination) => {
-    fetchProducts({
-      current: newPagination.current,
-      pageSize: newPagination.pageSize,
-    });
+    setPagination(newPagination);
   };
 
   const handleDelete = async (product) => {
-    const hideLoading = message.loading('Deleting product...', 0);
     try {
-      const response = await axios.delete(`${API_URL}/products/${product._id}`);
-      hideLoading();
-      if (response.status === 200) {
-        message.success({
-          content: 'Product deleted successfully',
-          duration: 3
-        });
-        refreshData();
-      }
+      await dispatch(deleteProduct(product._id)).unwrap();
+      dispatch(fetchProducts({ ...pagination }));
     } catch (error) {
-      hideLoading();
-      message.error({
-        content: error.response?.data?.message || 'Failed to delete product',
-        duration: 3
-      });
       console.error("Error deleting product:", error);
     }
   };
@@ -113,115 +57,56 @@ function App() {
     setOpenModal(true);
   };
 
-  const handleSubmit = async (values) => {
-    const hideLoading = message.loading(
-      selectedProduct ? 'Updating product...' : 'Creating product...',
-      0
-    );
-    try {
-      let response;
-      if (selectedProduct) {
-        response = await axios.put(`${API_URL}/products/${selectedProduct._id}`, values);
-      } else {
-        response = await axios.post(`${API_URL}/products`, values);
-      }
-
-      hideLoading();
-      if (response.status === 200 || response.status === 201) {
-        message.success({
-          content: selectedProduct 
-            ? 'Product updated successfully'
-            : 'Product created successfully',
-          duration: 3
-        });
-        setOpenModal(false);
-        refreshData();
-      }
-    } catch (error) {
-      hideLoading();
-      message.error({
-        content: error.response?.data?.message || 
-          (selectedProduct ? 'Failed to update product' : 'Failed to create product'),
-        duration: 3
-      });
-      console.error("Error submitting product:", error);
-    }
-  };
-
   const columns = [
     {
       title: "SKU",
       dataIndex: "SKU",
       key: "SKU",
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Search SKU"
-            value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
-            onPressEnter={() => {
-              confirm();
-              setFilters((prev) => ({ ...prev, SKU: selectedKeys[0] }));
-            }}
-            style={{ width: 188, marginBottom: 8, display: "block" }}
-          />
-        </div>
-      ),
+      sorter: true,
     },
     {
       title: "Product Name",
       dataIndex: "product_name",
       key: "product_name",
-      filterDropdown: ({ setSelectedKeys, selectedKeys, confirm }) => (
-        <div style={{ padding: 8 }}>
-          <Input
-            placeholder="Search Product Name"
-            value={selectedKeys[0]}
-            onChange={(e) =>
-              setSelectedKeys(e.target.value ? [e.target.value] : [])
-            }
-            onPressEnter={() => {
-              confirm();
-              setFilters((prev) => ({
-                ...prev,
-                product_name: selectedKeys[0],
-              }));
-            }}
-            style={{ width: 188, marginBottom: 8, display: "block" }}
-          />
-        </div>
-      ),
+      sorter: true,
     },
     {
       title: "Category",
       dataIndex: ["category_id", "category_name"],
       key: "category",
+      sorter: true,
+    },
+    {
+      title: "Materials",
+      dataIndex: "material_ids",
+      key: "materials",
+      render: (materials) =>
+        materials?.map((m) => m.material_name).join(", ") || "N/A",
     },
     {
       title: "Price",
       dataIndex: "price",
       key: "price",
-      render: (price) => `₹${(price).toFixed(2)}`,
+      sorter: true,
+      render: (price) => `₹${price.toFixed(2)}`,
     },
     {
       title: "Status",
       dataIndex: "status",
       key: "status",
+      sorter: true,
     },
     {
-      title: "Media",
+      title: "Media URL",
       dataIndex: "media_url",
       key: "media_url",
-      render: (url) =>
-        url ? (
-          <a href={url} target="_blank" rel="noopener noreferrer">
-            View Media
-          </a>
-        ) : (
-          "No Media"
-        ),
+      render: (url) => url ? (
+        <a href={url} target="_blank" rel="noopener noreferrer">
+          View Media
+        </a>
+      ) : (
+        <span style={{ color: '#999' }}>No media</span>
+      ),
     },
     {
       title: "Actions",
@@ -229,79 +114,87 @@ function App() {
       render: (_, record) => (
         <Space>
           <Button
-            type="text"
+            type="primary"
             icon={<EditOutlined />}
             onClick={() => handleEdit(record)}
-          />
+          >
+            Edit
+          </Button>
           <Button
-            type="text"
             danger
             icon={<DeleteOutlined />}
             onClick={() => handleDelete(record)}
-          />
+          >
+            Delete
+          </Button>
         </Space>
       ),
     },
   ];
 
   return (
-    <Layout>
-      <Content style={{ padding: "24px" }}>
-        <Row gutter={[0, 24]}>
-          <Col span={24}>
-            <Statistics refreshTrigger={refreshTrigger} />
-          </Col>
-          <Col span={24}>
-            <Card>
-              <Space
-                style={{
-                  marginBottom: 16,
-                  width: "100%",
-                  justifyContent: "space-between",
-                }}
+    <Layout style={{ minHeight: "100vh", padding: "20px" }}>
+      <Content>
+        <Card style={{ marginBottom: "20px" }}>
+          <Statistics />
+        </Card>
+
+        <Card>
+          <Row justify="space-between" align="middle" style={{ marginBottom: 16 }}>
+            <Col>
+              <Title level={3}>Products</Title>
+            </Col>
+            <Col>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={handleCreate}
               >
-                <Title level={4}>Products</Title>
-                <Button
-                  type="primary"
-                  icon={<PlusOutlined />}
-                  onClick={handleCreate}
-                >
-                  Add Product
-                </Button>
-              </Space>
+                Add Product
+              </Button>
+            </Col>
+          </Row>
 
-              <Table
-                columns={columns}
-                dataSource={products}
-                rowKey="_id"
-                pagination={pagination}
-                onChange={handleTableChange}
-                loading={loading}
-              />
-            </Card>
-          </Col>
-        </Row>
+          <Table
+            columns={columns}
+            dataSource={products}
+            rowKey="_id"
+            pagination={{
+              ...pagination,
+              total: totalProducts,
+            }}
+            onChange={handleTableChange}
+            loading={loading}
+          />
 
-        <Modal
-          title={selectedProduct ? "Edit Product" : "Add Product"}
-          open={openModal}
-          onCancel={() => {
-            setOpenModal(false);
-            setSelectedProduct(null);
-          }}
-          footer={null}
-          width={800}
-          destroyOnClose={true}
-        >
-          <ProductForm
-            product={selectedProduct}
-            onSubmit={handleSubmit}
+          <Modal
+            title={selectedProduct ? "Edit Product" : "Add Product"}
+            open={openModal}
             onCancel={() => {
               setOpenModal(false);
               setSelectedProduct(null);
             }}
-          />
-        </Modal>
+            footer={null}
+            width={800}
+            destroyOnClose={true}
+            keyboard={false}
+            maskClosable={false}
+            centered
+            className="product-modal"
+          >
+            <ProductForm
+              product={selectedProduct}
+              onSubmit={async (values) => {
+                setOpenModal(false);
+                dispatch(fetchProducts({ ...pagination }));
+              }}
+              onCancel={() => {
+                setOpenModal(false);
+                setSelectedProduct(null);
+              }}
+            />
+          </Modal>
+        </Card>
       </Content>
     </Layout>
   );
